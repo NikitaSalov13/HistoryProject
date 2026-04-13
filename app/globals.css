@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body), "PT Sans", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), "Cormorant Garamond", serif;
+}
+
+.marker-dot {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.marker-dot__core {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f8fafc;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(24, 35, 55, 0.15);
+}
+
+.marker-dot__core.is-selected {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(24, 35, 55, 0.2);
+}
+
+.yandex-map-root,
+.yandex-map-root > div {
+  width: 100%;
+  height: 100%;
+}
+
+.yandex-cluster-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(31, 95, 120, 0.9);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 4px rgba(31, 95, 120, 0.25);
+}
+
+.yandex-user-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #047857;
+  border: 3px solid #ecfdf5;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font: inherit;
+}
+
+.leaflet-control-attribution {
+  font-size: 11px;
+}
+
+.sheet-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(24, 35, 55, 0.25) transparent;
+}
+
+.sheet-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sheet-scroll::-webkit-scrollbar-thumb {
+  background: rgba(24, 35, 55, 0.3);
+  border-radius: 999px;
+}
