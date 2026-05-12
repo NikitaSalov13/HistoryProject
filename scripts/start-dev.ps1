@@ -33,14 +33,128 @@ function Resolve-Executable {
 function Test-PortInUse {
   param([int]$Port)
 
-  $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
   try {
-    $listener.Start()
-    $listener.Stop()
-    return $false
+    $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop | Select-Object -First 1
+    if ($conn) {
+      return $true
+    }
   } catch {
-    return $true
+    # Fallback on systems where Get-NetTCPConnection is unavailable.
   }
+
+  try {
+    $line = netstat -ano -p tcp | Select-String -Pattern "LISTENING" | Select-String -Pattern "[:\.]$Port\s" | Select-Object -First 1
+    return [bool]$line
+  } catch {
+    return $false
+  }
+}
+
+function Get-PortOwner {
+  param([int]$Port)
+
+  try {
+    $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop | Select-Object -First 1
+    if (-not $conn) {
+      return $null
+    }
+
+    $pid = [int]$conn.OwningProcess
+    $process = Get-CimInstance Win32_Process -Filter "ProcessId = $pid" -ErrorAction SilentlyContinue
+    $processName = $null
+    if (-not $process) {
+      try {
+        $processName = (Get-Process -Id $pid -ErrorAction Stop).ProcessName
+      } catch {
+        $processName = $null
+      }
+    }
+    if (-not $process) {
+      return [pscustomobject]@{
+        ProcessId = $pid
+        Name = $processName
+        CommandLine = $null
+      }
+    }
+
+    return [pscustomobject]@{
+      ProcessId = $pid
+      Name = $process.Name
+      CommandLine = $process.CommandLine
+    }
+  } catch {
+    try {
+      $netstatLine = netstat -ano -p tcp | Select-String -Pattern "LISTENING" | Select-String -Pattern "[:\.]$Port\s" | Select-Object -First 1
+      if (-not $netstatLine) {
+        return $null
+      }
+
+      $parts = ($netstatLine.ToString() -replace "\s+", " ").Trim().Split(" ")
+      $pid = [int]$parts[$parts.Length - 1]
+      $process = Get-CimInstance Win32_Process -Filter "ProcessId = $pid" -ErrorAction SilentlyContinue
+      $processName = $null
+      if (-not $process) {
+        try {
+          $processName = (Get-Process -Id $pid -ErrorAction Stop).ProcessName
+        } catch {
+          $processName = $null
+        }
+      }
+
+      return [pscustomobject]@{
+        ProcessId = $pid
+        Name = if ($process) { $process.Name } else { $processName }
+        CommandLine = if ($process) { $process.CommandLine } else { $null }
+      }
+    } catch {
+      return $null
+    }
+  }
+}
+
+function Stop-NextOnPortIfNeeded {
+  param([int]$Port)
+
+  $owner = Get-PortOwner -Port $Port
+  if (-not $owner) {
+    return $false
+  }
+
+  $ownerName = ""
+  $ownerCmd = ""
+  if ($owner.Name) {
+    $ownerName = $owner.Name
+  }
+  if ($owner.CommandLine) {
+    $ownerCmd = $owner.CommandLine
+  }
+
+  $name = $ownerName.ToLowerInvariant()
+  $cmd = $ownerCmd.ToLowerInvariant()
+  $isNode = $name -like "node*"
+  $isNodeNext = $isNode -and ($cmd -eq "" -or $cmd.Contains("next"))
+
+  if (-not $isNodeNext) {
+    return $false
+  }
+
+  Write-Host ""
+  Write-Host "Found existing Next.js process on port ${Port}: $($owner.Name) (PID $($owner.ProcessId))" -ForegroundColor Yellow
+  Write-Host "Stopping stale process to free port $Port..." -ForegroundColor Yellow
+
+  try {
+    Stop-Process -Id $owner.ProcessId -Force -ErrorAction Stop
+  } catch {
+    return $false
+  }
+
+  $attempt = 0
+  while ($attempt -lt 20 -and (Test-PortInUse -Port $Port)) {
+    Start-Sleep -Milliseconds 200
+    $attempt++
+  }
+
+  return -not (Test-PortInUse -Port $Port)
 }
 
 function Get-EnvValue {
@@ -173,37 +287,24 @@ if (-not (Test-Path -LiteralPath "node_modules")) {
   }
 }
 
-if (-not $SkipClean) {
-  Clear-NextCache -ProjectRoot $projectRoot
-}
-
 $port = $PreferredPort
 if (Test-PortInUse -Port $port) {
-  if ($AllowPortFallback) {
+  $stopped = Stop-NextOnPortIfNeeded -Port $port
+
+  if ($stopped) {
+    Write-Host "Port $port is now free." -ForegroundColor Green
+  } else {
+    Write-Host ""
+    Write-Host "Port $port is busy and could not be stopped automatically." -ForegroundColor Yellow
+    Write-Host "Switching to next available port..." -ForegroundColor Yellow
     while (Test-PortInUse -Port $port) {
       $port++
     }
-  } else {
-    try {
-      $ownerPid = (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction Stop |
-        Select-Object -First 1 -ExpandProperty OwningProcess)
-      if ($ownerPid) {
-        $ownerProcess = Get-Process -Id $ownerPid -ErrorAction SilentlyContinue
-        if ($ownerProcess) {
-          Write-Host ""
-          Write-Host "Port owner: $($ownerProcess.ProcessName) (PID $ownerPid)" -ForegroundColor Yellow
-        }
-      }
-    } catch {
-      # Best effort only: on some systems Get-NetTCPConnection may be unavailable.
-    }
-
-    Write-Host ""
-    Write-Host "Port $port is already in use." -ForegroundColor Red
-    Write-Host "Free this port and run start-dev.bat again, or run:" -ForegroundColor Yellow
-    Write-Host "  powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1 -AllowPortFallback" -ForegroundColor Yellow
-    exit 1
   }
+}
+
+if (-not $SkipClean) {
+  Clear-NextCache -ProjectRoot $projectRoot
 }
 
 $url = "http://localhost:$port"

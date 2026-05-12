@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FiltersBar } from "@/components/controls/FiltersBar";
 import { PlaceCard } from "@/components/panels/PlaceCard";
+import { getPlaceTypeColor } from "@/lib/place-colors";
 import type { Place, PlaceType } from "@/lib/types";
 
 const MapCanvas = dynamic(() => import("@/components/map/MapCanvas"), {
@@ -24,7 +25,7 @@ const defaultFocus = {
   zoom: 13
 };
 
-const typeColors: Record<PlaceType, string> = {
+const _legacyTypeColors: Record<PlaceType, string> = {
   Памятники: "#b45309",
   Здания: "#1d4ed8",
   Улицы: "#0f766e",
@@ -296,7 +297,7 @@ export function MapExplorer() {
   }, [selectedPlace]);
 
   return (
-    <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_430px]">
+    <section className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,0.72fr)_minmax(680px,1.28fr)]">
       <div className="space-y-3">
         <FiltersBar
           types={allFilterTypes}
@@ -319,7 +320,7 @@ export function MapExplorer() {
           </p>
         ) : null}
 
-        <div className="relative h-[calc(100vh-13rem)] min-h-[440px] overflow-hidden rounded-3xl border border-slate-800/10 bg-white shadow-panel">
+        <div className="relative h-[calc(100vh-16rem)] min-h-[380px] overflow-hidden rounded-3xl border border-slate-800/10 bg-white shadow-panel">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-base font-semibold text-slate-600">Загрузка точек...</p>
@@ -344,7 +345,7 @@ export function MapExplorer() {
                 <li key={type} className="flex items-center gap-2">
                   <span
                     className="inline-block h-3 w-3 rounded-full"
-                    style={{ backgroundColor: typeColors[type] }}
+                    style={{ backgroundColor: getPlaceTypeColor(type) || _legacyTypeColors[type] }}
                     aria-hidden="true"
                   />
                   <span>{type}</span>
@@ -355,8 +356,8 @@ export function MapExplorer() {
         </div>
       </div>
 
-      <aside className="hidden lg:block">
-        <div className="h-[calc(100vh-13rem)] min-h-[440px]">
+      <aside className="hidden self-stretch lg:block">
+        <div className="h-full min-h-[380px]">
           {selectedPlace ? (
             <PlaceCard
               place={selectedPlace}
@@ -386,9 +387,9 @@ export function MapExplorer() {
             className="fixed inset-0 z-[1100] bg-black/35 lg:hidden"
             onClick={handleCloseCard}
           />
-          <div className="fixed inset-x-0 bottom-0 z-[1200] h-[80vh] rounded-t-3xl border border-slate-800/10 bg-white p-2 shadow-[0_-12px_32px_rgba(0,0,0,0.2)] lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-[1200] h-[82vh] overflow-hidden rounded-t-3xl border border-slate-800/10 bg-white shadow-[0_-12px_32px_rgba(0,0,0,0.2)] lg:hidden">
             <div className="mx-auto my-2 h-1.5 w-12 rounded-full bg-slate-300" aria-hidden="true" />
-            <div className="h-[calc(80vh-1.5rem)]">
+            <div className="h-[calc(82vh-1.5rem)]">
               <PlaceCard
                 place={selectedPlace}
                 onClose={handleCloseCard}

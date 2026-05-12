@@ -21,11 +21,19 @@ export interface PlaceSource {
   license: string;
 }
 
+export interface PlaceImageView {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
 export interface PlaceImages {
   then: string;
   now: string;
   then_alt: string;
   now_alt: string;
+  then_view?: PlaceImageView;
+  now_view?: PlaceImageView;
 }
 
 export interface Place {

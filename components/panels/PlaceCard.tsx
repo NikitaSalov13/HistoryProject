@@ -50,6 +50,8 @@ export function PlaceCard({ place, onClose, onCopyLink, copySuccess }: PlaceCard
           nowImage={place.images.now}
           thenAlt={place.images.then_alt}
           nowAlt={place.images.now_alt}
+          thenView={place.images.then_view}
+          nowView={place.images.now_view}
         />
 
         <section aria-label="Описание">
@@ -69,8 +71,12 @@ export function PlaceCard({ place, onClose, onCopyLink, copySuccess }: PlaceCard
                 className="rounded-2xl border border-slate-800/10 bg-slate-50/80 p-3"
               >
                 <p className="text-sm font-bold text-slate-800">{source.title}</p>
-                <p className="mt-1 text-sm text-slate-700">Автор: {source.author}</p>
-                <p className="mt-1 text-sm text-slate-700">Лицензия: {source.license}</p>
+                {source.author ? (
+                  <p className="mt-1 text-sm text-slate-700">Автор: {source.author}</p>
+                ) : null}
+                {source.license ? (
+                  <p className="mt-1 text-sm text-slate-700">Лицензия: {source.license}</p>
+                ) : null}
                 <a
                   href={source.url}
                   target="_blank"

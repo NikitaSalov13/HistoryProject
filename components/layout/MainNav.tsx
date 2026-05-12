@@ -10,7 +10,7 @@ export function MainNav() {
 
   return (
     <header className="sticky top-0 z-[1000] border-b border-slate-800/10 bg-parchment/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-3 py-3 sm:px-4 lg:px-6">
+      <div className="flex w-full items-center justify-between px-3 py-3 sm:px-4 lg:px-6">
         <div className="flex items-baseline gap-3">
           <span className="font-heading text-2xl font-semibold leading-none text-rust">
             Тогда / Сейчас

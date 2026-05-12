@@ -1,4 +1,10 @@
-import { PLACE_TYPES, type Place, type PlaceSource, type VerificationStatus } from "@/lib/types";
+import {
+  PLACE_TYPES,
+  type Place,
+  type PlaceImageView,
+  type PlaceSource,
+  type VerificationStatus
+} from "@/lib/types";
 
 const verificationStatuses: VerificationStatus[] = ["verified", "needs_review"];
 
@@ -21,6 +27,15 @@ const readText = (record: Record<string, unknown>, key: string): string => {
   return value.trim();
 };
 
+const readOptionalText = (record: Record<string, unknown>, key: string): string => {
+  const value = record[key];
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+};
+
 const readNumber = (record: Record<string, unknown>, key: string): number => {
   const value = record[key];
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -36,6 +51,9 @@ const readNumber = (record: Record<string, unknown>, key: string): number => {
 
   throw new PlaceValidationError(`Field "${key}" must be a number`);
 };
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
 
 const readType = (value: string): Place["type"] => {
   if (!PLACE_TYPES.includes(value as Place["type"])) {
@@ -66,11 +84,37 @@ const readSources = (record: Record<string, unknown>): PlaceSource[] => {
 
     return {
       title: readText(item, "title"),
-      author: readText(item, "author"),
+      author: readOptionalText(item, "author"),
       url: readText(item, "url"),
-      license: readText(item, "license")
+      license: readOptionalText(item, "license")
     };
   });
+};
+
+const readImageView = (
+  images: Record<string, unknown>,
+  key: "then_view" | "now_view"
+): PlaceImageView => {
+  const fallback: PlaceImageView = {
+    zoom: 1,
+    x: 50,
+    y: 50
+  };
+
+  const value = images[key];
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const zoom = clamp(readNumber(value, "zoom"), 0.6, 1.8);
+  const x = readNumber(value, "x");
+  const y = readNumber(value, "y");
+
+  return {
+    zoom: Number(zoom.toFixed(2)),
+    x: Number(x.toFixed(2)),
+    y: Number(y.toFixed(2))
+  };
 };
 
 export const parsePlacePayload = (
@@ -107,9 +151,13 @@ export const parsePlacePayload = (
     throw new PlaceValidationError('Field "images" is required');
   }
 
+  const title = readText(payload, "title");
+  const thenAlt = readOptionalText(images, "then_alt") || `${title} then`;
+  const nowAlt = readOptionalText(images, "now_alt") || `${title} now`;
+
   return {
     id,
-    title: readText(payload, "title"),
+    title,
     type: readType(readText(payload, "type")),
     address: readText(payload, "address"),
     coordinates: {
@@ -123,8 +171,10 @@ export const parsePlacePayload = (
     images: {
       then: readText(images, "then"),
       now: readText(images, "now"),
-      then_alt: readText(images, "then_alt"),
-      now_alt: readText(images, "now_alt")
+      then_alt: thenAlt,
+      now_alt: nowAlt,
+      then_view: readImageView(images, "then_view"),
+      now_view: readImageView(images, "now_view")
     },
     sources: readSources(payload),
     verification_status: readVerificationStatus(payload.verification_status)

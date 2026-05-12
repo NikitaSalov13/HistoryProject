@@ -73,16 +73,6 @@ h4 {
   box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
 }
 
-.leaflet-container {
-  width: 100%;
-  height: 100%;
-  font: inherit;
-}
-
-.leaflet-control-attribution {
-  font-size: 11px;
-}
-
 .sheet-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(24, 35, 55, 0.25) transparent;
