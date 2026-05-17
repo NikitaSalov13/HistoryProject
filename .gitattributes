@@ -1,2 +1,15 @@
-# Auto detect text files and perform LF normalization
+# Auto detect text files and normalize line endings
 * text=auto
+
+# Keep source files in LF for predictable diffs/cross-platform behavior
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+
+# Windows launcher scripts
+*.bat text eol=crlf
+*.ps1 text eol=crlf

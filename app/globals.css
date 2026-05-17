@@ -11,14 +11,14 @@
 }
 
 body {
-  font-family: var(--font-body), "PT Sans", sans-serif;
+  font-family: "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-heading), "Cormorant Garamond", serif;
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 .marker-dot {
