@@ -40,6 +40,52 @@ export const getAdminUsername = (): string =>
 export const getAdminPassword = (): string =>
   process.env.ADMIN_PASSWORD?.trim() || "admin12345";
 
+const normalizeBooleanEnv = (value: string | undefined): boolean | null => {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "true") {
+    return true;
+  }
+
+  if (normalized === "false") {
+    return false;
+  }
+
+  return null;
+};
+
+export const shouldUseSecureCookie = (request?: NextRequest): boolean => {
+  const fromEnv = normalizeBooleanEnv(process.env.ADMIN_COOKIE_SECURE);
+  if (fromEnv !== null) {
+    return fromEnv;
+  }
+
+  if (request) {
+    const forwardedProto = request.headers
+      .get("x-forwarded-proto")
+      ?.split(",")[0]
+      ?.trim()
+      .toLowerCase();
+
+    if (forwardedProto === "https") {
+      return true;
+    }
+
+    if (forwardedProto === "http") {
+      return false;
+    }
+
+    if (request.nextUrl.protocol === "https:") {
+      return true;
+    }
+
+    if (request.nextUrl.protocol === "http:") {
+      return false;
+    }
+  }
+
+  return process.env.NODE_ENV === "production";
+};
+
 export const createAdminSessionToken = (username: string): string => {
   const payload: SessionPayload = {
     username,

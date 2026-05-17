@@ -79,6 +79,7 @@ Set in `.env`:
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
 - `ADMIN_SESSION_SECRET`
+- `ADMIN_COOKIE_SECURE=false`
 
 Then start HTTP-only stack:
 

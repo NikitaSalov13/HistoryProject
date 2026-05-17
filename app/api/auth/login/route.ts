@@ -5,7 +5,8 @@ import {
   ADMIN_SESSION_COOKIE,
   createAdminSessionToken,
   getAdminPassword,
-  getAdminUsername
+  getAdminUsername,
+  shouldUseSecureCookie
 } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     name: ADMIN_SESSION_COOKIE,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(request),
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 12
