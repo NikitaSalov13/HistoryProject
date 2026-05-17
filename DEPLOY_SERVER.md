@@ -66,6 +66,36 @@ docker compose logs -f caddy
 After certificates are issued, open:
 - `https://<your-domain>`
 
+## No domain yet (HTTP-only mode)
+
+If you do not have a domain yet, run app without Caddy/TLS:
+
+```bash
+cp .env.example .env
+```
+
+Set in `.env`:
+- `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
+
+Then start HTTP-only stack:
+
+```bash
+docker compose -f docker-compose.http.yml up -d --build
+docker compose -f docker-compose.http.yml ps
+```
+
+Open:
+- `http://<server-ip>:3000`
+
+Logs:
+
+```bash
+docker compose -f docker-compose.http.yml logs -f app
+```
+
 ## 6) Update later
 
 ```bash
